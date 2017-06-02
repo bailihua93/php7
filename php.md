@@ -242,7 +242,6 @@ function parse_unsigned_int($string) {
  5.  round($x[, int])  ; 对$x进行四舍五入，传入的int表示保留多少位小数
  6. 浮点数如果被解析成字符串的时候，由于地区的不同可能会得到不同的结果
 
-
 ##### string   
 1. 一个字符串 string 就是由一系列的字符组成，其中每个字符等同于一个字节。这意味着 PHP 只能支持 256 的字符集，因此不支持 Unicode
    (1) 单引号     如果用单引号表示的字符串，其中可以包含的转义字符只能是  \\ 、\'    
@@ -316,6 +315,132 @@ echo $name.'hello<br>';  //可以外部点的方法拼接
    +  NULL 总是被转变成空字符串。
    +  大部分的 PHP 值可以转变成 string 来永久保存，这被称作串行化，可以用函数 serialize() 来实现。如果 PHP 引擎设定支持 WDDX，PHP 值也可被串行化为格式良好的 XML 文本
    + 使用函数 ord() 和 chr() 实现 ASCII 码和字符间的转换。
+
+10. mail(发送内容)    
+bool mail ( string $to , string $subject , string $message [, string $additional_headers [, string $additional_parameters ]] )        
+   * to    发给谁 
+   * subject  标题 
+   * message  信息  
+   * additional_headers    发送任何额外的有效的邮件头 
+11. 字符串格式化   
+   + trim(str)  删除字符串开始和结束的空格，即\n换行 、 \r回车   水平制表符\t  竖直制表符\x0B   字符结束符\0   空格      ； 衍生的函数 ltrim()和rtrim()  ;都放回新的字符串  
+   + n12br($str)   把字符串中的"\n" 换成 br 标签；因为html忽略纯空格，所以换行需要标签来执行  
+   + int printf ( string $format [, mixed $args [, mixed $... ]] ) 格式化的字符串输出到浏览器 
+   + string sprintf ( string $format [, mixed $args [, mixed $... ]] )函数返回一个格式化的字符串  
+```php
+// 上面的format规则是
+printf("this is %s",$a);
+%s 字符串  
+%.2f 保留两位小数的浮点
+b 二进制    c 字符      d数字   f双精度小数  o 八进制   s字符串   u整数并作为非小数输出   
+%2\$.2f 用传入的第二个参数替换  2\$来指定         
+
+%[`padd]
+```
+  + int vprintf ( string $format , array $args )接收的是数组
+  + string vsprintf ( string $format , array $args )
+  + int fprintf ( resource $handle , string $format [, mixed $args [, mixed $... ]] ) 
+  + int vfprintf ( resource $handle , string $format , array $args )
+
+
+  + strtoupper() 转化成大写
+  + strtolower()
+  + ucfirst() 首字母大写
+  + ucwords() 字符串每个单词的首字母大写 
+15. 格式化字符串用于存储  
+  + 引号 反斜杠\  NULL 会被数据库解析成控制序列，单纯传入的话，可以通过转意 \"  \\   
+  + php提供了连个专门用于转义字符串的函数。  
+  + 默认没有启用上面功能的可以    $feedback = addslashes(trim($str)); 严格编辑 
+  + Stripslashes() 去掉反斜杠   这两个方法是由magic_quotes_gpc 控制的  
+16. 字符串链接和分割  
++ array explode ( string $spliteStr , string $string [, int $limit = PHP_INT_MAX ] ) 分割字符串成数组
++ string implode ( [string $glue ,] array $pieces ) 组合成字符串，默认间隔是空字符串 
++ join('<br>', $array); 等间的
++ strtok   给出一堆字符，按照字符中的一个来分割字符串，每次只返回一个匹配项     
+```php
+$string = "This is\tan example\nstring";
+/* Use tab and newline as tokenizing characters as well  */
+$tok = strtok($string, " \n\t");
+
+while ($tok !== false) {
+    echo "Word=$tok<br />";
+    $tok = strtok(" \n\t");
+}
+```
++ empty()  检测用户输入是否有效
+17. 截取  substr； 注意这里是按照字节来的  
+ string substr ( string $string , int $start [, int $length ] )  start传入的是负数的话，就是倒数第几个开始； length为截取的数量，负数的话，字符串长度减去该值就是要截取的长度 
+
+18. 比较   
++ strcmp(str1,str2);  字母表顺序比较，等0，大1，小负   
++ strcasecmp 不区分大小写的，应该是都转成小写  
++ strnatcmp  自然排序方法来比较
+19. strlen($str)  字符串长度，字节来的 ；邮箱的自己最少是6  
+
+
+20. 普通的查找替换  
+   +   strstr($str,match)  strchr()完全一样 ,如果字符存在返回第一个匹配的后面的字符串（包含查询的内容），没有的话返回false  
+   ```php
+   $name = "你好啊，白先生，你来自何方";
+   $str = strstr($name,"先生");
+   echo $str; //先生，你来自何方
+   ```  
+   + stristr()  大小写不敏感的查询有没有的函数  
+   + strchr($str,match) match的第一个字符有效，然后用第一个字符去和字符串匹配       
+
+
+   + strpos()   类似于indexof 也可以传入偏移量，按照字节来的 $str = strpos($name,"me",4);   
+   + strrpos()  lastindexof   
+
+
+   + mixed str_replace ( mixed $search , mixed $replace , mixed $subject [, int &$count ] )
+     replace替换subject中search的count次
+   
+   + mixed substr_replace ( mixed $string , mixed $replacement , mixed $start [, mixed $length ] )  == splite()
+
+
+21. 正则  
+
++ int ereg ( string $pattern , string $string [, array &$regs ] )   等价exce , 通过$reg[0]  $reg[1]  $reg[2] 访问，7.0废除
++ int eregi ( string $pattern , string $string [, array &$regs ] )  不区分大小写
+
++ int preg_match ( string $pattern , string $subject [, array &$matches [, int $flags = 0 [, int $offset = 0 ]]] ) 下一次从哪开始匹配 
+
+
++ string eregi_replace ( string $pattern , string $replacement , string $string )  
++ mixed preg_replace ( mixed $pattern , mixed $replacement , mixed $subject [, int $limit = -1 [, int &$count ]] )
+
++ array split ( string $pattern , string $string [, int $limit = -1 ] )   7.0移除，由 preg_split() explode() str_split()  代替
+
+这里的pattern都是字符串样形式的
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ##### boolean
 1. $a = true; $b = false;  不区分大小写   
@@ -612,6 +737,7 @@ array explode ( string $delimiter , string $string [, int $limit = PHP_INT_MAX ]
 18. 其他函数 
   
 + each($array_name) 指针前移前返回当前元素  ；和 reset代开
++ current($array)  返回当前元素  
 + next($array_name) 指针前移后，返回新的当前元素  // 不会用  
 + reset($arry_name) 指针移动到第一个位置 ,并返回第一个元素
 + end($array_name)  指针移动到最后，返回最后一个元素
@@ -1019,4 +1145,461 @@ while(!feof($fp)){
 
 
  
-  
+
+
+## 函数   
+
+### require()   and  include()  
+可以把一个文件载入到php脚本中，这个文件可以包含任何希望在一个脚本中输入的内容，包含php语句 、文本、html标记、php函数 或者类 
+
+区别： 失败后，require会给出致命错误，include只是给出一个警告 ,引入库函数很有用，可以防止库被引用两次  
+
+变体： require_once()  include_once()   确保引入的文件只能被引用一次  
+
+引入的内容会在引入的位置执行 ； 这两个函数不需要分辨文件的扩展名，因此可以是任意扩展名，但是约定是   .inc 或者 .php  
+
+函数必须放在php标记之间，不然的话，文件内容就会原样输出   
+
+组合网站的时候，常见的约定是调用哪些包含在其他文件 something.inc(inc=>include)中的部分文件代码，这些文件代码如果不被调用，将会停止执行；但不推荐，因为如果web服务器没有专门设置， .inc文件不会被解释成PHP代码；     如果打算这么做，可以将inc文件保存在一个人目录中，二这个目录可以被脚本访问，但是引入的文件不会被web服务器载入，也就是，放在web文档树外。这么试着好处： 文件扩展名是.php，但只包含部分页面或脚本可能引起错误， 若果使用别的扩展名，别人就能读取源码
+
+把页面重复的部分（页眉页脚）分别放在不同的文件中，以后修改的时候也比较方便    
+
+如果希望保证文件被当做纯文本或者html，有了分开的文件，可以通过readfile()来代替方法，这个函数会回显文件内容，不会对其解析。 若果使用用用户提供的文本，可能导致重要的安全问题  
+
+####  php.ini 中 auto_prepend_file 和 auto_append_file  
+可以用来设置页眉页脚的引入，就像include一样，但是不灵活  
+
+```xml 
+windows下    
+auto_prepend_file = "c:/program File/Apache Software Froundation/Apache2.2//include/header.php"
+auto_append_file =  "c:/program File/Apache Group/Apache2/include/footer.php"
+
+unix   
+auto_prepend_file = "home/username/include/header.php"   
+auto_append_file = "home/username/include/footer.php"
+```
+
+如果是apache 服务器，可以对单个的目录进行不同配置选项的修改，前提是服务器允许重设器主配置文件。   要给目录设定自动前加入和自动追加，需要在该目录中建立一个名为.htaccess的文件,文件包含以下代码  
+```xml
+php_value  auto_prepend_file "/home/username/include/header.php"  
+php_value auto_prepend_file  "/home/username/include/footer.php"  
+```  
+性能会比直接php.ini 慢，但是比较灵活  
+
+
+###函数相关  
+函数名不区分大小写  
+自定义的函数只能在声明他的脚本中使用，也可以吧常用的放在一个文件中，然后在所有脚本中调用require()语句  
+
+1. 如果希望在一个函数中退出php并输入html脚本,可以向向在脚本其他地方做的那样，使用一个封闭的php标记 ，在编写html  
+
+```php
+<?php 
+
+function my_function(){
+    ?>
+
+    My function was called;
+
+    <?php
+}
+?>
+```
+2. 不支持重载  
+
+3. 函数名可以是变量，也就是可变函数  
+
+#### 函数的参数 
+1. 使用参数  
+```php
+ function create_table($data){
+     echo "<table border=\"1\">";
+     reset($data);// 数组操作必须有的，首先将指针指向开始 
+     $value = current($data);
+     while($value){
+         echo "<tr><td>".$value."</td></tr>\n";
+         $value = next($data);
+     }
+     echo "</table>";
+ }
+```  
+
+2. 可选参数    
+
+通过定义形参的时候指定默认值，在函数调用的时候，这些形参就可传，可不传了； 参数会从左到右赋值，不能跳过一个参数，给出后一个参数赋值
+
+```php
+
+ function create_table( $data , $border = 1 ,$cellpadding = 4 ,$cellspacing = 4 ){
+     echo "<table border=\"".$border."\" cellpadding = \"".$cellpadding."\" cellspacing=\"".$cellspacing."\">";
+     reset($data);// 数组操作必须有的，首先将指针指向开始 
+     $value = current($data);
+     while($value){
+         echo "<tr><td>".$value."</td></tr>\n";
+         $value = next($data);
+     }
+     echo "</table>";
+ }
+$arr = array(1,2,3);
+create_table($arr);
+create_table($arr,3,5,6);
+``` 
+
+
+3. 函数内部使用外部的变量  
+```php
+$var  =1 ;
+function fn(){
+    global $var;
+    echo $var;
+}
+fn();
+```
+
+变量的作用域是从执行global $var 开始改变的。 函数声明可以在调用他之前和之后  。 函数的作用域是提前调用，并在全局可用的   
+4. 值传递和引用传递  
+```php
+function add1($var){
+    $var += 1;
+}
+function add2(&$var){
+    $var +=2;
+}
+``` 
+前一个参数是值传递的，不会改变外部的变量的值，后一个参数是引用传递的，会改变  ；
+并且之后对象和资源是默认的引用传递。其他的想要引用传递的话，只能通过$符号 
+
+5. 递归  
+函数内部调用函数本身，必须有个可以判断的条件来退出调用。 
+可以用来代替循环，但是性能比循环差    
+
+## 面向对象的php  
+###面向对象 
+面向对象的优点是支持和鼓励封装的能力 - 封装也叫数据隐藏 。本质上，访问对象的数据，只能通过对象的操作来实现，对象的操作也就是对象的接口  
+
+1. 封装性
+对象的功能取决于对象使用的数据。在不改变端口的情况下，很容易修改对象实现的细节来提高性能或者修改bug   
+对象是一个被保存数据和操作这些数据的操作方法的唯一、可标识的集合     
+2. 多态性  
+不同的类可以对同一操作有不同的行为，一旦对象定下来，相应的操作也就定下来了
+
+3. 继承  
+子类可以获得父类的属性和方法
+####类
+1. 基本样子
+```php
+class classname{
+    public $name;
+    private $age;
+    protected $salary;
+    function say(){
+
+    }
+}
+```
+2. 构造函数  
+用来初始化对象的属性或者设置该对象需要的其他对象，名字必须是 __construct();创建对象的时候自动调用
+```php
+ class customer
+ {  
+     function __construct($param){
+       $this->$param = $param;
+     }
+   
+ }
+ ```  
+ 支持函数重载  
+
+ 3. 析构函数  
+ 销毁类前执行一些操作或者完成一些功能，通常在所有对该类的引用都被重置或者超出作用域的时候自动发生,函数名必须是__destruct();析构函数不能带任何参数 
+
+4. 实例化  
+$a =new classname($param);  
+5. 使用类的属性   $this->$attribute
+```php
+class classname{
+    public $attribute;
+    function operation($param){
+        $this->attribute =$param;
+        echo $this->attribute;//访问类内部的属性的时候，不能加$符号
+    }
+    function __get($name){
+        return $this->$name;
+    }
+    function __set($name,$value){
+        $this->$name = $value;
+    }
+}
+
+$a =  new classname(1);
+$a->attribute = 10;    //
+$a->oparation($anme);
+```  
+上面代码中，类定义的__get()   和  __set()  是在函数直接访问或者修改对象的属性的收自动调用的，可以进行一些操作，来处理代码，是的安全性提升； 通过$name 和对应属性的比较，可以确认操作的是哪个属性，然后制定相应的规则就可以安全的操作对象了  
+
+
+6. 范围修饰符  
++ public 默认的选项，不写出来就是他了，共有的属性和方法可以在类的内部和外部进行访问  
++ private  被标记的属性和方法只能在类的内部访问。 如果没有使用__get __set方法，你可能会对所有的属性都使用这个关键字。也可以使部分方法称为私有的。例如：某些方法只是在类的内部使用的工具性函数。私有的属性和方法不会被继承  
++ protected  属性和方法只能在类本身和子类中访问 ，不是对象，是在类中访问  
+
+7. 继承 
+extend  ； private 和 protected 访问符控制可见性  
+```php
+class A{
+    private function oparation1(){
+        echo "oparation1 called";
+    }
+    protected function oparation2(){
+        echo "oparation2 called";
+    }
+    public function oparation3(){
+        echo "oparation3 called";
+    }
+}
+
+class B extends A{
+    function __construct(){
+        $this->oparation1(); //因为该方法是父类私有private的，在这里调用会在new的时候报错
+        $this->oparation2();  //protected 可以在子类中使用
+        $this->oparation3();
+    }
+}
+$b = new B();
+
+$b -> oparation2();//因为是protected，只能在类里面调用，这里报错
+$b -> oparation3();//public任何时候都可以使用
+```
+
+8. 重载   
+子类继承父类之后，自己定义了父类中存在的属性和方法的话，会优先调用子类中的方法和属性  
+在子类中属性和方法重载了，但是还是想调用父类的方法，可以 parent::operation() ，用parent关键字来达到目的 
+
+```php
+class A
+{
+    public  $name = "白"; //这里不加关键字public貌似出错，不知道怎么了
+    function oparation(){
+        echo "oparation called".$this->name."<br/>";
+    }
+}
+
+$a = new A();
+echo $a->name;
+$a-> oparation();
+
+
+class B extends A{
+   public $name = "黑";
+   public function oparation(){
+       parent::oparation(); //类中调用父类中的方法，可以用parent::来指定
+       echo "b".$this->name;//访问父类中的属性怎么操作
+   }
+   
+}
+$b = new B();
+$b->oparation();
+```
+
+9. parent
+
+10. final关键字可以禁止继承和重载  
+final function  name()   在函数声明前使用final关键字，函数将不能再任何子类中重载      
+final class name{ }  该类不能被继承
+
+
+11. 接口  
+
+```php
+interface Displayable
+{
+    function display();
+}
+
+class webPage implements Displayable{
+    function display(){
+
+    }
+}
+```
+ 
+继承接口的类，必须实现接口中定义的方法  
+
+
+
+12. 类的设计  
+
+
+13. Per-Class常量 
+该常量可以在不初始化该类的情况下访问  
+```php
+<?php 
+class Math {
+    const pi = 3.14159;
+}
+echo  Math::pi;  
+```  
+通过const元素定义，Classnam::element访问该属性  
+
+14. 静态方法   static function name(){}   
+```php
+class Math {
+    static function squared($input){
+        return $input*$input;
+    }
+}
+
+echo Math::squared(8);
+```
+静态方法中不能有this  
+
+15.  $b instanceof   B
+
+16. 可以指定函数的形参的类型  
+```php
+function check_hint(B $someclass){
+
+}
+
+如果传入A的对象，那么就会报错
+```  
+17. 延迟静态绑定 （父类可以使用子类重载的静态方法 ）
+```php  
+class A{
+    public static function who(){
+        echo __CLASS__;  //__CLASS__会返回本身的类名
+    }
+    public static function test(){
+        static::who();//这里是之后绑定的函数，不是现在的
+    }
+}
+
+class B extends A{
+    public static function who(){
+        echo __CLASS__;
+    }
+}
+B::test();//B
+?>
+```
+
+14. 克隆对象  
+$c = clone $b ; 返回的是副本 
+
+如果想要改变默认的clone行为，需要在基类中定义__clone()方法。可以定义所需的确切复制行为 ，遇到clone关键字自动执行  ； 为了是对象属性中含有新的对象，无法做到完全的副本 
+
+15. 抽象类  
+``` php
+abstract class A {
+    abstract function aparation($param1,$param2);
+}
+```
+
+
+17. __call()  用来重载方法,自动调用的
+在类中实现__call  
+```php
+class A{
+    public function __call($method,$p){
+       if($method = "display"){
+           if(is_object($p[0])){
+               $this->displayObject($p[0]);
+           }else if(is_array($p[0])){
+               $this->displayArray($p[0]);
+           }
+       }
+
+
+    }
+}
+
+
+$a = new A();
+$a->display(array(1,2,3));//a
+$a->display("cat");
+//代码中不实现diaplay
+```
+
+
+18. __autoload()方法  
+单独的函数，在实例化未被声明的类的时候调用，用来加载文件的，在类外面定义  
+```php
+function __autoload($name){
+    include_once $name.".php";
+}
+```
+
+19. 遍历对象的属性   
++ 官方建议对foreach实现一个空的Traversable接口，但是会报错，直接用就行了 
+```php
+$a = new A();
+foreach($a as $att){
+    echo $att."<br/>";
+}
+```
++ 实现iterator需要将  迭代器类实现Iterator 接口，被迭代的类实现IteratorAggregate ;
+
+```php
+class ObjectIterator implements Iterator{
+    private $obj;
+    private $count;
+    private $currentIndex;  
+
+    function __construct($obj){
+        $this->obj =$obj;
+        $this->count = count($this->obj->data);//data好像保存着对象的属性集合
+    }
+
+    function rewind(){
+        $this->currentIndex = 0;
+    }
+    function valid(){ //valid 有效的
+        return $this->currentIndex < $this->count;
+    }
+    function key(){
+        return $this->currentIndex;
+    }  
+    function current(){
+        return $this->obj->data[$this->currentIndex];
+    }
+    function next(){
+        $this->currentIndex++;
+    }
+}
+
+class Object implements IteratorAggregate{
+    public $data = array();
+
+    function __construct($in){
+        $this->data = $in; 
+    }
+    function getIterator(){
+        return new ObjectIterator($this);
+    }
+}
+
+$myObject = new Object(array(2,3,4,5,6));
+$myIterator = $myObject->getIterator();
+
+for($myIterator->rewind();$myIterator->valid();$myIterator->next()){
+    $key = $myIterator->key();
+    $value = $myIterator->current(); 
+    echo $key."  ".$value."<br/>";
+}
+```
+
+20. __toString()  
+尝试打印该对象的时候自动调用  
+```php
+class P{
+   public  $a= 1;
+   public function __toString(){
+       return (var_export($this,TURE));
+   }
+}
+```
+var_export 函数会打印类中的所有属性值    
+21. 反射  Reflection   
+很恶心，没看   
+
+
