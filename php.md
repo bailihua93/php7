@@ -1603,3 +1603,47 @@ var_export 函数会打印类中的所有属性值
 很恶心，没看   
 
 
+
+
+## 第七章 错误和异常处理  
+### 异常处理概念   
+基本思想是代码在try代码块被调用和执行  try{}   
+php中异常必须手动抛出    throw new Exception("haha");  
+catch 有try必须有一个catch  
+```php
+
+try{
+    throw new Exception("A terrible error has occurred",42);
+}catch(Exception $e){
+    echo "Exception".$e->getCode().":".$e->getMessage()."<br/>".
+    "in".$e->getFile()."on line".$e->getLine()."<br/>";
+}
+```  
+
+### Exception类
++ php异常处理提供了内置类 ，构造函数需要两个参数，一个错误消息和一个错误代码    
+throw new Exception("string",int);  
+内置方法 
+  - getCode() 返回传递个构造函数的代码
+  - getMessage()   返回传递的消息  
+  - getFile()   返回异常代码的完整路径 
+  - getLine()  返回异常的行号 
+  - getTrace()   返回包含异常代码回退路径的数组  
+  - getTraceAsString()  返回getTrace信息，只是是个字符串 
+  -  _toString   简单显示一个Exception对象，并且给出所有方法可以提供的信息  
+
++ 子类 
+
+只能重写__toString方法  
+```php
+class FileOpenException extends Exception{
+    public function __toString(){
+        return "fileOpenException".$this->getCode().":".$this->getMessage()."<br/>"."in"
+        .$this->getFile()."on line".$this->getLine()."<br/>";
+    }
+}
+
+```
+
+###异常和php的其他处理错误机制   
+产生和处理异常的过程并不会影响或者禁止这种错误处理机制  ；无论有没有处理，错误的地方还是需要@抑制，并且报错的地方还会报错
