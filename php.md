@@ -1647,3 +1647,134 @@ class FileOpenException extends Exception{
 
 ###异常和php的其他处理错误机制   
 产生和处理异常的过程并不会影响或者禁止这种错误处理机制  ；无论有没有处理，错误的地方还是需要@抑制，并且报错的地方还会报错
+
+
+
+# Mysql   
+表、列、行、值。键（唯一标识）、外键（主键出现在其他表格）  
+
+模式: 数据库整套表格的完整设计称为数据库的模式     
+
+Customers(CustomerID,Name,address,City); 可以把主键加下划线，外键用斜体；来表示一个表 
+Orders(OrderID,,CustomerID,amount,date);  
+
++ 关系  
+外键表示两个表格数据的关系 。Order表到Customers表的关系，表示）Orders中一行与Cunstomers表一行的关系  
+
++ 要避免的不规则： 插入、 删除、修改     
+
+
++ 当两个对象存在多对多关系的时候，建立一个关联的表示必须的  
+
++ 避免多个空属性的设计    
+#### 表格类型总结  
+通常数据库由两种类型的表组成  
++ 描述现实世界对象的简单表，这些表可能包含其他简单对象的键，他们是一对一或者一对多的关系；   +
++ 描述现实世界对象多对多关系的关联表    
+数据库的权威 ： C.J.Date   
+
+
+###创建数据库  
+1. 每条语句要以分号结尾才会被执行    
+#### 登陆  
+mysql -h hostname -u username -p  回车提示输入密码了就 
+
+创建数据库
+create database chapter9;  
+
+
+
+###权限管理  
+创建新的用户的时候遵循权限最少原则 : 全局 、 数据库 、 表 、列  
+
+GRANT和KEVOKE 分别用来授予和取消Mysql用户的权限   
+
+#### 创建用户并赋予他们权限   
+```
+GRANT  privileges  [columns]  
+ON item 
+TO user_name [IDENTIFIED BY 'password']  
+[REQUIRE ssl_options]
+[WITH [GRANT OPTION|limit_options]]
+```
+方括号是可选的；
+* privileges用逗号分开的权限：select insert等    
+* columns 可以对每一个列指定权限，也可以使用单列的名称或者使用逗号分开的一组列的名称   
+* item 是将新权限应用于的数据库或表。 可以将项目指定为*.* ,权限就给了所有数据库，叫做赋予全局权限。更常见的是dbname.*  应用于库中所有表。 dbname.tablename.* 应 用于表的所有列   
+* username  用户登录Mysql用到的用户名。不必与登录系统是用的相同。 mysql中user_name 可以包含一个主机名。可以用来区分laura(解释成laura@localhost)和laura@somewhere.com 。因为来自不同域的用户可能使用同一个名字。同时可以指定用户从什么地方链接到本机，甚至指定访问哪些表和库  
+* password用户登录时用的密码  最好是大小写字母和非字母组合  
+* require 指定用户必须通过加密套接字链接，或者指定ssl选项。 关于SSL到Mysql的链接信息，参阅Mysql手册    
+* WITH GRANT OPTION    表示允许用户想别人授予自己拥有的权限; 也可以指定如下with子句  MAX_QUERIES_PER_HOUR n 或者 MAX_UPDAATES_PER_HOUR n 或者MAX_CONNRTTIONS_PER_HOUR n    
+指定每个用户每小时执行的查询 更新  链接的数量   ；限制负载    
+
+* 权限存储在名为mysql的数据库中的5个系统表中。mysql.user mysql.db  mysql.host mysql.tables_priv 和mysql.colums_priv   可以直接修改   
+
+####权限的类型和级别  
+1. 用户的权限  
+  + SELECT   表 列
+  + INSERT   表列
+  + UPDATE   表列 
+  + DELETE   表 
+  + INDEX    表
+  +  ALTER   表 
+  + CREATE   数据库表
+  + DROP     数据库 表   
+  + 在WITH GRANT OPTION中可以给出REFERENCES 和EXECUTE权限  
+2. 管理员权限  
+   +  CREATE TEMPORRAY TABLES  在create table中使用TEMPORARY关键字  
+   + FILE       允许数据从文件读入表，或者从表读入文件。节省时间。否则每次数据输入数据库都需要重新输入。但是文件载入可以用来载入mysql可识别的任何文件，包括其他用户的数据库和潜在的密码文件。授予的时候要小心，或者自己为用户载入数据  
+   + LOCK TABLES  
+   + PROCESS
+   + RELOAD
+   + REPLICATION CLIENT   
+   + SHOW DATABASES  
+   + SHUTDOWN  
+   + SUPER   
+   + ALL
+   + USAGE       不授予权限，创建一个用户允许登录，不允许其他任何操作  
+#### REVOKE 
+``` 
+REVOKE privileges [(columns )]
+ON item
+FROM user_name  
+
+ 如果已经给出了WITH GRANT OPTION子句  
+ REVOKE ALL PRIVILEGES ，GRANT  
+ FROM user_name  
+```
+
+#### 例子  
+1. 管理员  
+```
+创建管理员  
+GRANT ALL
+ON * 
+TO bai identified by 'bai510419'
+WITH GRANT OPTION;
+取消管理员   
+REVOKE ALL PRIVILEGES ，GRANT  
+FROM bai
+```
+
+2.创建普通用户  
+```
+创建没有任何权限的用户  
+grant usage 
+on books.*
+to xiaobai identified by "bai510419";
+
+//给予权限  
+grant select,insert,update,delete,index,alter,create,drop
+on books.*
+to xiaobai;
+
+//取消部分权限
+revoke alter,create,drop
+on books.*
+from xiaobai;
+
+// 删除用户  
+revoke all
+on books.* 
+from xiaobai
+```
