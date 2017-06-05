@@ -2267,4 +2267,391 @@ utf8或者gbk;
 ```
 
 
-##11 章   php链接数据库
+##11 章   php链接数据库  
+
+###建立链接选择库
+1. 建立链接 
+```php
+@ $db = new mysqli('localhost','username','password','dbname');      //然后使用此对象访问数据  
+@ $db = mysqli_connect('localhost','username','password','dbname');// 返回资源面向过程，与文件处理方式类似，需要把它传给各个函数  
+
+if(mysqli_connect_errno()){
+  //检测是否有链接错误，错误的话，mysqli_connect_errno()返回一个错误号，在这里处理错误 
+  exit；
+}
+```
+mysql对同时链接数据库的链接数量有限制， 参数  max_connections决定同时链接的个数，该参数和相关的apache参数maxclients作用是，告诉服务器拒绝新的链接请求，却倒系统资源不会再系统忙碌的时候，或者软件瘫痪的时候被请求和使用  ； 修改 httpd.conf中的maxClients和  my.conf 的  max_connections  
+
+2. 选择库 
+```php 
+$db -> select_db(bookstore);
+
+或者 
+
+mysqli_select_db(db_resource,dbname);
+```
+
+3. 查询  
+
+```php
+$query = "select * from bookstore where".$searchtype."like'%".$searchterm."%'";  
+//发送个mysql的查询语句不需要在后面添加一个分号；
+$result = $db->query($query);  //返回的是一个对象
+//或者
+$result = mysqli_query($query);// 返回的是结果的资源 错误返回false
+
+```
+4. 显示查询结果  
+```php
+$num_results = $result->num_rows;//$num = mysqli_num_rows($result);返回总共多少条数据
+
+for($i=0;$i<$num_results;$i++){
+    $row = $result->fetchRow(DB_FETCHMODE_ASSOC);//取出一行  传入的参数表示希望以数组方式返回结果行 
+
+}
+```
+
+5. 关闭数据库  
+
+```php
+$db->disconnect();
+```
+
+
+
+
+
+
+
+
+6. 总的
+```php
+
+<!--链接-->
+@ $db = new mysqli('localhost','username','password','dbname');   
+if(mysqli_connect_errno()){
+  //检测是否有链接错误，错误的话，mysqli_connect_errno()返回一个错误号，在这里处理错误 
+  exit；
+}
+$db -> select_db(bookstore);  //重复了吧，上面指定过了
+
+
+
+$query = "select * from bookstore where".$searchtype."like'%".$searchterm."%'";  
+//发送个mysql的查询语句不需要在后面添加一个分号；
+$result = $db->query($query);  //返回的是一个对象
+
+$num_results = $result->num_rows;//$num = mysqli_num_rows($result);返回总共多少条数据
+
+for($i=0;$i<$num_results;$i++){
+    $row = $result->fetch_assoc();//取出一行  传入的参数表示希望以数组方式返回结果行；返回的是一个相关数组   
+    stripslashes($row['rolname']);//直接按照关键字访问，需要处理一下可能，去掉转义用的反斜杠
+
+
+
+    $row = $resault->fetch_row();//返回的遍历数组  $row[1]/$row[2]访问
+
+    $row = $resault->fetch_object();//返回一个对象 $row->title 访问  
+}
+
+$result->free();
+$db->disconnect();
+```
+### 操作
+
+#### 查询  
+```php
+<html>
+<head>
+  <title>Book-O-Rama Search Results</title>
+</head>
+<body>
+<h1>Book-O-Rama Search Results</h1>
+<?php
+  // create short variable names
+  $searchtype=$_POST['searchtype'];
+  $searchterm=trim($_POST['searchterm']);
+
+  if (!$searchtype || !$searchterm) {
+     echo 'You have not entered search details.  Please go back and try again.';
+     exit;
+  }
+
+  if (!get_magic_quotes_gpc()){
+    $searchtype = addslashes($searchtype);
+    $searchterm = addslashes($searchterm);
+  }
+
+  @ $db = new mysqli('localhost', 'bookorama', 'bookorama123', 'books');
+
+  if (mysqli_connect_errno()) {
+     echo 'Error: Could not connect to database.  Please try again later.';
+     exit;
+  }
+
+  $query = "select * from books where ".$searchtype." like '%".$searchterm."%'";
+  $result = $db->query($query);
+
+  $num_results = $result->num_rows;
+
+  echo "<p>Number of books found: ".$num_results."</p>";
+
+  for ($i=0; $i <$num_results; $i++) {
+     $row = $result->fetch_assoc();
+     echo "<p><strong>".($i+1).". Title: ";
+     echo htmlspecialchars(stripslashes($row['title']));
+     echo "</strong><br />Author: ";
+     echo stripslashes($row['author']);
+     echo "<br />ISBN: ";
+     echo stripslashes($row['isbn']);
+     echo "<br />Price: ";
+     echo stripslashes($row['price']);
+     echo "</p>";
+  }
+
+  $result->free();
+  $db->close();
+
+?>
+</body>
+</html>
+
+```
+
+#### 插入数据  
+```php
+<html>
+<head>
+  <title>Book-O-Rama Book Entry Results</title>
+</head>
+<body>
+<h1>Book-O-Rama Book Entry Results</h1>
+<?php
+  // 获取数据
+  $isbn=$_POST['isbn'];
+  $author=$_POST['author'];
+  $title=$_POST['title'];
+  $price=$_POST['price'];
+ //验证是否为空
+  if (!$isbn || !$author || !$title || !$price) {
+     echo "You have not entered all the required details.<br />"
+          ."Please go back and try again.";
+     exit;
+  }
+
+  //格式化代码
+  if (!get_magic_quotes_gpc()) {
+    $isbn = addslashes($isbn);
+    $author = addslashes($author);
+    $title = addslashes($title);
+    $price = doubleval($price);
+  }
+
+  @ $db = new mysqli('localhost', 'bookorama', 'bookorama123', 'books');
+
+  if (mysqli_connect_errno()) {
+     echo "Error: Could not connect to database.  Please try again later.";
+     exit;
+  }
+
+  $query = "insert into books values
+            ('".$isbn."', '".$author."', '".$title."', '".$price."')";
+  $result = $db->query($query);
+
+
+  // 结果返会的是bool值，验证需要  $db->affeccted_row 显示数量
+  if ($result) {
+      echo  $db->affected_rows." book inserted into database.";
+  } else {
+  	  echo "An error has occurred.  The item was not added.";
+  }
+
+  $db->close();
+?>
+</body>
+</html>
+```
+
+
+
+ * 这里用到了格式化字符串  
+
+```php
+<?php
+// If magic quotes are enabled
+echo $_POST['lastname'];             // O\'reilly
+echo addslashes($_POST['lastname']); // O\\\'reilly
+
+// Usage across all PHP versions
+if (get_magic_quotes_gpc()) {
+    $lastname = stripslashes($_POST['lastname']);
+}
+else {
+    $lastname = $_POST['lastname'];
+}
+
+// If using MySQL
+$lastname = mysql_real_escape_string($lastname);
+
+echo $lastname; // O\'reilly
+$sql = "INSERT INTO lastnames (lastname) VALUES ('$lastname')";
+?>
+```
+
+#### prepared语句  
+prepared语句的使用，对于执行大量不同数据的相同查询时，可以提高执行速度。 可以免受sql注入的攻击  
+
+prepared语句的基本思想是可以向mysql发送一个需要执行的查询模板，然后单独发送数据。  可以向相同的prepared语句发送大量的相同数据； 这个特性对批处理插入很有用  
+
+```php 
+//替换的部分用问号代替
+$query = "insert into books values(?,?,?,?)";
+$stmt = $db->prepare($query);
+
+
+//绑定参数，第一个是指出每个问号传入什么格式的数据 ；s  string ；d double ； i int ；b  blob
+$stmt->bind_param("sssd",$isbn,$author,$title,$price);//这里面有值了，添加进表里。
+$stmt->execute();//提交  
+
+
+echo $stmt-affected_rows;
+
+$stmt->close();
+```
+
+
+对于查询  
+```php
+$stmt->bing_result($isbn,$author,$title,$price);
+$stmt->execute();
+
+//在循环中调用就可以返回下一结果行
+$stmt->fetch()
+
+```
+
+###MDB2 兼容多个数据库的接口  
+
+```php
+<?php
+  // create short variable names
+  $searchtype=$_POST['searchtype'];
+  $searchterm=trim($_POST['searchterm']);
+
+  if (!$searchtype || !$searchterm) {
+     echo "You have not entered search details.  Please go back and try again.";
+     exit;
+  }
+
+  if (!get_magic_quotes_gpc()) {
+    $searchtype = addslashes($searchtype);
+    $searchterm = addslashes($searchterm);
+  }
+
+  // set up for using PEAR MDB2
+  require_once('MDB2.php');
+  $user = 'bookorama';
+  $pass = 'bookorama123';
+  $host = 'localhost';
+  $db_name = 'books';
+
+  // set up universal connection string or DSN
+  $dsn = "mysqli://".$user.":".$pass."@".$host."/".$db_name;
+
+  // connect to database
+  $db = &MDB2::connect($dsn);
+
+  // check if connection worked
+  if (MDB2::isError($db)) {
+    echo $db->getMessage();
+    exit;
+  }
+
+  // perform query
+  $query = "select * from books where ".$searchtype." like '%".$searchterm."%'";
+
+  $result = $db->query($query);
+
+  // check that result was ok
+  if (MDB2::isError($result))  {
+    echo $db->getMessage();
+    exit;
+  }
+
+  // get number of returned rows
+  $num_results = $result->numRows();
+
+  // display each returned row
+  for ($i=0; $i <$num_results; $i++) {
+     $row = $result->fetchRow(MDB2_FETCHMODE_ASSOC);
+     echo "<p><strong>".($i+1).". Title: ";
+     echo htmlspecialchars(stripslashes($row['title']));
+     echo "</strong><br />Author: ";
+     echo stripslashes($row['author']);
+     echo "<br />ISBN: ";
+     echo stripslashes($row['isbn']);
+     echo "<br />Price: ";
+     echo stripslashes($row['price']);
+     echo "</p>";
+  }
+
+  // disconnect from database
+  $db->disconnect();
+?>
+```
+##chapter 12 权限进一步管理   
+1. 
+use mysql;            
+show tables;            
+存储权限的6个表，user 、host 、db、table_ptiv 、columns_priv  、procs_priv 称为授权表
+
+
+2. 手动更新权限的时候，用grant和revoke语句，但是需要提示服务器进行更新  
+root  登陆后 flush privileges    
+直接在操作系统中  mysqladmin reload    或者 mysqladmin flush-privileges  
+
+### 提高mysql的安全性  
+1. unix操作系统中，以root用户的身份运行mysql会容易攻击。 因为这可能会赋予一个mysql普通用户读写操作系统任何地方文件的权限   
+解决办法： 创建一个专门用来运行mysql的特定用户。  建立只能由mysql用户访问的目录；  
+在防火墙之后建立mysql服务。检查是否从服务器外，以端口3306的方式连接mysql    
+
+2. 密码要放在web目录以外的文件中，使用的时候载入。定期修改      
+
+3. 不用纯文本形式保存密码到数据库中。  可以用mysql的 SHA1()函数加密以后单项进行保存。 查询的时候，要以相同的方式改了之后再查询 
+
+4. 权限控制 process观察其他用户在做什么 file可以读写操作系统文件 shutdown和reload 等只有管理员有  
+
+   避免主机中使用通配符，host最好是用ip地址 ；可以启动mysql后台程序，--skip-name-resolve来加强他   
+###获取更多关于数据库的信息  
+show tables; 显示库中所有表  show databases;
+show tables from books ;  
+show columns  from orders from books; 
+show grant from username; 显示其所有的权限  
+
+discribe table [columns]
+
+explain table; 
+explain query_expression;获取的查询结果竖着显示出来的  
+
+
+
+###优化数据库 
+1.  
+数据越小越好： 最小化冗余 ，最小的列数据。null最少，主键尽量短。 避免可变长度   
+权限系统检查过程少的好  
+
+
+2. 表的优化  
+用了一段时间后的表，执行 optimize table  tablename；  或者命令行 myisamchk -r table;  
+也可以使用myisamchk工具根据索引对该表索引和数据进行排序   
+myisamchk --sort -index --srot-records=1 pathtomysqldatadirectory/*/*.MYI
+3. 使用索引   
+4. 使用默认值 （减少insert时间）
+
+###备份数据库  
+1. 复制数据文件的时候  lock tables tablename lock_type[,table lock_type..]  
+每个表必须事表名，tyoe可以是read和write  。对于备份只需要read锁。执行备份前执行 flush tables 
+
+2. 命令行备份  
+mysqldump --opt --all-databases >all.sql 会导出all.sql    
+稍后添置mysql进程  通过 --log -bin [=logfile]命令行选项启动它。保存在日志文件中的更新将根除上次本分后数据库发生的变化  
