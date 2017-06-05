@@ -1677,11 +1677,15 @@ Orders(OrderID,,CustomerID,amount,date);
 ###创建数据库  
 1. 每条语句要以分号结尾才会被执行    
 #### 登陆  
-mysql -h hostname -u username -p  回车提示输入密码了就 
+mysql -h hostname -u username -p  回车提示输入密码了就         
+
 
 创建数据库
-create database chapter9;  
-
+```
+CREATE DATABASE `bookstore`  
+CHARACTER SET 'utf8'  
+COLLATE 'utf8_general_ci'; 
+```
 
 
 ###权限管理  
@@ -1697,6 +1701,18 @@ TO user_name [IDENTIFIED BY 'password']
 [REQUIRE ssl_options]
 [WITH [GRANT OPTION|limit_options]]
 ```
+grant all 
+on bookstore.*
+to bai
+
+
+
+
+
+
+
+
+
 方括号是可选的；
 * privileges用逗号分开的权限：select insert等    
 * columns 可以对每一个列指定权限，也可以使用单列的名称或者使用逗号分开的一组列的名称   
@@ -1765,9 +1781,9 @@ to xiaobai identified by "bai510419";
 
 //给予权限  
 grant select,insert,update,delete,index,alter,create,drop
-on books.*
-to xiaobai;
-
+on bookstore.*
+to bai identified by 'bai510419';
+//有问题不知道为什么
 //取消部分权限
 revoke alter,create,drop
 on books.*
@@ -1777,4 +1793,478 @@ from xiaobai;
 revoke all
 on books.* 
 from xiaobai
+
+
 ```
+
+注意： 之后登陆有问题的话。删除系统默认的两个没名字的账户；quit 直接退出 
+
+#### 登陆并操作  
+mysql -u bai -p
+use dbname;          
+mysql -D dbname -h hostname  -u username -p  直接指定数据库   
+
+####操作数据库  
+1. 创建数据库表   增加表  创建表
+```
+CREATE TABLE `database_user` (  
+`ID` varchar(40) NOT NULL default '',  
+`UserID` varchar(40) NOT NULL default '',  
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;  
+
+
+
+create Table customers (
+    customerid  int             unsigned not null auto_increment primary key,
+    name        char(50)        not null,
+    address     char(100)       not null,
+    city        char(30)        not null);
+create table orders(
+    orderid     int  unsigned not null  auto_increment primary key,
+    customerid  int  unsigned not null,
+    amount      float(6,2),
+    date        date not null);
+
+create table books(
+    isbn    char(13)  not null primary key,
+    author  char(50),
+    title   char(100),
+    price  float(4,2)
+);
+create table order_items(
+    orderid int unsigned not null,
+    isbn    char(13)  not null,
+    quantity tinyint  unsigned,
+    primary key(orderid,isbn)
+);
+create table book_reviews(
+    isbn char(13)  not null primary key,
+    review text
+);
+
+show tables;
+show databases;
+describe books; 
+
+```
+2. 导入sql文件 
+mysql -h host -u bai -D bookstore -p < D:/workspace/php7/demo1/php_sql_web/book_insert.sql 不加分号
+主机名改为host    并指定 D:/workspace/php7/demo1/php_sql_web/book_table.sql
+mysql -h 127.0.0.1 -u bai -D bookstore -p < D:/workspace/php7/demo1/php_sql_web/book_table.sql 
+
+3. 关键字   
+ + NOT NULL 表中所有行的此属性必须有个值，没有指定的话，该列可以为空（NULL）  
+ + AUTO_INCREMENT  自增，必须为索隐列   
+ + PRIMARY KEY     列名称后面的表示本列唯一，mysql将自动索引该列。  语句结尾的分句是一个可选格式，用来表示主键由两列组成   
+ + UNSIGNED    只能是0或者正数
+4. 数据类型 (数字、时间和日期、字符串)
+* 数字，所有数字可以指定ZEROFILL 空余部分补0 ，一个字段指定ZEROFILL他将自动成为UNSIGNED
+  + tinyint   0~255 或者 +-127   存储空间1字节，非常小的数字 ； 同义词  BIT BOOL
+  + smallint[(m)]  +-32768 或者  65535       存储空间 2   x小证书   
+  + int[(m)]   +-2^31            存储空间4  一般帧数；同义词 integer
+  + bigint     +-2^63            存储空间8   
+  + float(6,2)       存储空间 4           总共可以显示6位，保留两位小数 ； 保留的小数位最大为30或者M-2 
+  + float
+  + double
+  + double[(M,D)]    存储空间8      同义词  REAL  
+
+
+
+
+
+  + char(40)   字符串类型，需要指定长度，空余部分用空格代替，速度比varchar 快；存储的时候，会过滤多余的空格   
+  + varchar   字符串，自动获取长度（存入的+1）
+  + 所有的都设置not null 反应快一些 ，优化， 有些需要通过其他表计算得到的就得等以后才能赋值   
+  + text   可变大小 保存长文本  
+  + blob  保存二进制数据，可以容纳大量数据，支持任何数据，图像和声音等   binary large objects
+
+
+
+  + date      YYYY-MMM_DD       一个日期  
+  + time      HH：MM：SS  
+  + datetime  YYYY-DD-MM HH:MM:SS
+  + timestamp[(M)] 时间标签，处理报告中有意义  取决于m值  
+  + YEAR[2|4] 两位数好还是4位的年  
+
+
+  + SET 指定类中的值必须来自一个特定集合中的指定值；列值可以包含来自该集合的多个值，在指定的集合中，最大可以有64个元素  
+  + ENUM就是枚举，与set相似  ；但该类型的列可以只有一个指定集合中的值或者null 最大有655353个元素
+5.  创建索引  
+设计主键将在这些列上创建索引 ；  性能问题多数在数据库上没有创建任何索引的情况下发生的（创建没有主键或者索引的表示可能的）     
+如果发现一个不是主键的列运行许多查询，可以在该列添加索引改善性能     
+```
+create [UNIQUE|FULLTEXT] INDEX index_name 
+on table_name (index_column_name [(length)] [ASC|DESC],...)
+
+```
+可选的length字段允许指定只有该字段前length个字符将被索隐。也可以指定一个索隐的排序为升序或者降许；默认升序   
+
+6. 标识符       
+database  table  column  index（索引，就像书的目录）  alias(别名)
+<a href= "http://blog.csdn.net/xluren/article/details/32746183">索引详细解读</a>   
+
+数据库将被映射到具有某种文件结构的目录，表则映射到了文件  。这可能对赋予他们的名字有直接影响  .unix 区分大小写     
+列名和别名不区分大小写，但是不能再同一个sql中使用不同的大小写  
+
+目录和包含数据的文件的位置需要在配置中设置。 可以使用mysqladmin来检查他们在系统中的位置   
+
+> mysqladmin -h host -u root -p variables  
+
+### 操作数据库里的内容  
+
+####  数据增 
+```sql
+
+insert [into]  table [(col1,col2,col3..)]  values (value1,value2,value3,..)
+insert into customers values (NULL,'白','朝阳','飞机场西');  //会按照顺序填入表中
+insert into customers (name,city) values ('黑','石家庄');  //只插入部分内容 ，在tablename后面得到括号中指定  
+insert into customers set name = '韩',
+                          address = '裕华路',
+                          city = '东京';  
+可以一次插入多行，然后每一行出现在自己的括号里，每组括号间用逗号分隔   
+
+insert后面可以添加low_priority 一位置当数据不是从表格读处的时候，系统必须等待并稍后插入 ；delayed关键字，先缓存，运行其他查询；     ignore，如果导致键冲突的话，会忽略此次插入  ； 
+在句末指定 on duplicate key update expression  常规的update语句修改重复值  
+
+
+运行的插入脚本；  
+ use chapter9； insert。。。。
+
+ mysql -h 127.0.0.1  -u bai -p dbname <D:/workspace/php7/demo1/php_sql_web/book_insert.sql
+```       
+
+####  数据查
+```mysql
+select [option]  items 
+[into file_datails]
+from tablesname 
+[where conditions]
+[group by group_type]
+[having where_definition]
+[order by order_type]
+[limit limit_criteria]
+[procedure proc_name(arguments)]
+[lock_options];
+
+
+
+select name,city from customers;   
+select * from customers;  
+select * from customers where customerid=3;
+```
+
+1.  比较运算符  
+   - =   >  <   <=  >= !=  
+   - is not null  
+   - between     select * from customers where customerid between 1  and 4;
+   - in  测试一个值是否在特定集合里     select * from customers where customerid in (1,3,5);
+   - not in  
+   - like  模式匹配      常规文本 + % 表示  任何数量的字符， _  表示只有一个字符 不区分大小写  
+   - not like  
+   - regexp    支持posix  
+   - and  
+   - or  
+2.  多表关联操作  
+  
+ + 简单的双表关联  
+```sql
+select orders.orderid,orders.amount,orders.date 
+from customers,orders
+where customers.name = '白'
+and customers.customerid = orders.customerid;
+```  
+表明之间的逗号等价于输入 inner jion 或者 cross join 。这是一个钟关联，有事称为完全关联或者表的笛卡尔成绩 
+添加查询条件后称为 等价关联  。 用点号列出要查的所在表和所在列。  
+**关联条件，往往比关联的表少1或者相等**
+
+
+3. 查找不匹配的行  左关联      
+左关联指 两表间指定关联条件下，匹配的数据行 。如果右边的表中没有匹配行，结果中增加一行，该行右边的列为NULL
+```
+select customers.customerid ,customers.name,orders.orderid 
+from customers left join orders
+on customers.customerid = orders.customerid;
+``` 
+左边表格的所有数据，在右边表格中查找对应的条件，返回结果中为null的表示在右边表格不存在；  条件是on   
+
+
+只想看没有过订单的用户的话 。
+```
+select customers.customerid ,customers.name,orders.orderid 
+from customers left join orders
+on customers.customerid = orders.customerid
+where orders.orderid is null;
+
+```
+
+这里的where是在结果中查询一遍再。并且 on customers.customerid = orders.customerid 可以替换成 using(customerid),前提是两个表中的名字一样   
+
+4. 表的别名  aliases   
+
+简化表名和列名用的  
+ 
+```
+select c.name 
+from customers as c,orders as o,order_items as oi,books as b
+where c.customerid = o.customerid
+and o.orderid = oi.orderid
+and oi.isbn = b.isbn
+and b.title like  '%Java%';
+```
+
+当要关联一个表到表本身的时候，必须用别名。例如查找同一个表中值相同的行  
+```
+select c1.name ,c2.name ,c1.city
+from customers as c1,,customers as c2
+where c1.city = c2.city
+and c1.name != c2.name
+```
+
+
+5. 排序  (结果的显示方式)
+
+```sql
+select *
+from customers
+order by name  [asc|desc]; 可以在多余一列上排序
+```
+
+6. 分组与合计函数  
+ +  avg(colname) 
+ + count(项目)  如果指定一列，将给出列中非空（NULL）值得行数。如果在列前加distinct 将得到不同值得列数 ，count(*),将得到包含null行在内的行数
+ + max(col)
+ + min(col)
+ + std    标准背离值
+ + sun    和
+ 
+```sql
+ select customerid ,avg(amount)
+ from orders
+ group by customerid;
+```
+通过合计函数 group by子句的时候，实际上改变了函数的行为，查询给出的不是表的平均订单总量，而是给出每个顾客的平均订单总额；  
+使用的时候select 列名和group by列名，必须同时出现才能正常工作   
+
+除了分组和合计数据，我们还可以使用having子句测试一个结果。直接放在groupby后，类似于分组合计的where子句  
+
+
+```sql
+ select customerid ,avg(amount)
+ from orders
+ group by customerid
+ having avg(amount)>50;
+```
+
+7. limit 
+```
+select name 
+from customers
+limit 2,3;
+```
+从第二行开始查询，返回仨个数据；之一行号是从0开始的  
+limit 是mysql的扩展，其他的数据库不支持
+
+#### 子查询  
+1. 
+嵌套在另一个查询内部的查询 ；虽然大多数子查询的功能可以通过连接和临时表的使用获得；但子查询容易阅读和编写  
+
+```sql 
+select customerid,amount 
+from orders
+where amount = (select max(amount) from orders);
+
+等价于
+select customerid,amount
+from orders 
+order by amonut desc
+limit 1;
+```
+
+2. 子查询和操作符
+特殊的子查询操作符有5个。   
++  any    select c1 from t1  where c1  > any(select c1 from t2)  和任何行做比较
++ in  select c1 from t1 where c1 IN (select c1 from t2);   和任何作比较  相当于  = 
++ some  select c1 from t1 where c1> some(select  c1 from t2 ); 
++ all   select c1 from ti where c1>all(select c1 from t2) ;   
++ exists  关联查询时用；并且内部子句可以使用外部查询的结果
+
+```sql  
+select isbn,title 
+from books
+where not exists
+(select * from order_item where order_items.isbn=book.isbn);
+
+```
+exist 和not exist
+
+
+操作符查询的只返回true或者false  
+
+
+3. 行子查询  
+```
+select c1,c2,c3 
+from t1
+where (c1,c2,c3)  in (select c1,c2,c3 from t2);
+```
+
+4. 子查询的临时表  
+
+```sql
+select * from 
+(select customerid,name from customers where city='Box Hill')
+as box_hill_customers;
+```   
+
+### 更新数据库记录   修改表，修改列  
+1. 修改行  
+```
+update [low_priority] [ignore] tablename 
+set column1 = expression1,column2 = expression2....
+[where condition] 
+[order by order_criterial]
+[limit number]
+
+
+如果指定了low_priority 和 ignore  ，就会想insert语句一样工作做    
+limit 常和 oderby联合使用  
+
+
+update customers
+set address = '250 Olsens Road'
+where customerid =4;
+
+```
+
+2. 修改表  
+alter table [ignore] tablename alteration [,alteration]  
+
+ansl sql中每个alter table只能实现一次修改，但是mysql允许实现多次     
+如果指定了ignore子句并尝试的修改可能会产生重复的主键，第一个重复的主键将进入修改后的表，其他重复的主键会被删除。 如果没有指定，修改将失败并且回滚  
+
+
++ 修改语句   
+    - add[column]  column_description [first|after column];可以指定添加的新列，不指定添加到最后
+    - add[column]  (column_description， column_description [first|after column]);最后添加一些列  
+    - add index [index](column,...)    指定一列或者几列添加一个表的索引
+    - add [constraint:symbol] primary key(column)   指定一列或者几列为表的主键，constraint是针对使用外键的表
+    - add unique [constraint]
+     
+
+    - alter [culumn] column {set default value  | drop default}  添加或者删除特定列的默认值
+    - change column new_column_description  改变column列  ，新的名字
+    - modify column column_description  类似于change ,修改列的类型，不是列名称
+    - drop column 删除列
+    - drop primary key 删除主索引
+    - drop index index   删除指定的索引
+
+**没看完看不下去了** 
+
+
+###删除 
+1. 删除行 
+delete  from tablename where condition  
+2. 删除表 
+drop table tablename  
+3. 删除数据库  
+drop database dbname  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+### 解决mysql中文乱码  
+#### 出现乱码的原因  
+1.server本身设定问题，例如还停留在latin1
+2.table的语系设定问题(包含character与collation)
+3.客户端程式(例如php)的连线语系设定问题  
+#### 解决办法    
+1. 修改数据库和服务端的编码方式   
+**下面的指令没用，重启失效，直接修改**   
+找到文件C:\xampp\mysql\bin\my.ini ；注释掉utf8前面的东西  
+
+```xml
+init-connect='SET NAMES utf8'
+collation_server=utf8_unicode_ci
+character_set_server=utf8
+skip-character-set-client-handshake
+character_sets-dir="/xampp/mysql/share/charsets"
+```
+
+
+ + 查看数据库和服务端编码格式并修改
+ > show variables like "%char%"  
+ + 设定编码 （临时的） 
+ ```sql
+ SET character_set_client='utf8';  
+ SET character_set_connection='utf8';  
+ SET character_set_results='utf8'; 
+ SET character_set_database='utf8'; 
+ SET character_set_server='utf8'; 
+ set character_set_system='utf8';
+ ```  
+ > show variables like “%colla%；
+ ```
+ set collation_connection='utf8_general_ci';
+ set collation_database='utf8_general_ci';
+ set collation_server='utf8_general_ci';
+```
+
+
+
+
+
+1. 创建数据库的时候  
+```sql 
+CREATE DATABASE `test`  
+character  SET 'utf8'  
+collate 'utf8_general_ci';    
+```
+2. 建表的时候  
+```sql
+CREATE TABLE `database_user` (  
+`ID` varchar(40) NOT NULL default '',  
+`UserID` varchar(40) NOT NULL default '',  
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;  
+```
+
+3. 已经存在的  
+
+ + 查看数据库的编码格式  
+ > show create database test; 
+ > alter database 数据库名 character set “字符集”； 命令来修改数据库字符集
+ > ALTER DATABASE `db_name` DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci; 
+ + 查看表的编码方式 
+ > show create table customers;
+ > ALTER TABLE `tb_name` DEFAULT CHARACTER SET utf8 COLLATE utf8_general_ci; 
+
+4. 导入数据库  
+> set names utf8  
+> LOAD DATA LOCAL INFILE 'C:\\utf8.txt' INTO TABLE yjdb;  
+
+5.  网页问题 
+```
+将网站编码设为 utf-8,这样可以兼容世界上所有字符。
+　　如果网站已经运作了好久,已有很多旧数据,不能再更改简体中文的设定,那么建议将页面的编码设为 GBK, GBK与GB2312的区别就在于:GBK能比GB2312显示更多的字符,要显示简体码的繁体字,就只能用GBK。
+1.编辑/etc/my.cnf　,在[mysql]段加入default_character_set=utf8;
+2.在编写Connection URL时，加上?useUnicode=true&characterEncoding=utf-8参;
+3.在网页代码中加上一个"set names utf8"或者"set names gbk"的指令，告诉MySQL连线内容都要使用
+utf8或者gbk;
+```
+
+
+##11 章   php链接数据库
